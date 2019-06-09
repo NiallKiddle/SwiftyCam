@@ -313,32 +313,6 @@ open class SwiftyCamViewController: UIViewController {
         addGestureRecognizers()
 
 		previewLayer.session = session
-
-		// Test authorization status for Camera and Micophone
-
-		switch AVCaptureDevice.authorizationStatus(for: AVMediaType.video) {
-		case .authorized:
-
-			// already authorized
-			break
-		case .notDetermined:
-
-			// not yet determined
-			sessionQueue.suspend()
-			AVCaptureDevice.requestAccess(for: AVMediaType.video, completionHandler: { [unowned self] granted in
-				if !granted {
-					self.setupResult = .notAuthorized
-				}
-				self.sessionQueue.resume()
-			})
-		default:
-
-			// already been asked. Denied access
-			setupResult = .notAuthorized
-		}
-		sessionQueue.async { [unowned self] in
-			self.configureSession()
-		}
 	}
 
     // MARK: ViewDidLayoutSubviews
@@ -400,8 +374,39 @@ open class SwiftyCamViewController: UIViewController {
 
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         NotificationCenter.default.addObserver(self, selector: #selector(captureSessionDidStartRunning), name: .AVCaptureSessionDidStartRunning, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(captureSessionDidStopRunning),  name: .AVCaptureSessionDidStopRunning,  object: nil)
+        
+        // Test authorization status for Camera and Micophone
+        
+        switch AVCaptureDevice.authorizationStatus(for: AVMediaType.video) {
+        case .authorized:
+            
+            // already authorized
+            break
+        case .notDetermined:
+            
+            // not yet determined
+            sessionQueue.suspend()
+            
+            if shouldPrompToAppSettings {
+                AVCaptureDevice.requestAccess(for: AVMediaType.video, completionHandler: { [unowned self] granted in
+                    if !granted {
+                        self.setupResult = .notAuthorized
+                    }
+                    self.sessionQueue.resume()
+                })
+            }
+        default:
+            
+            // already been asked. Denied access
+            setupResult = .notAuthorized
+        }
+        
+        sessionQueue.async { [unowned self] in
+            self.configureSession()
+        }
     }
 
 	// MARK: ViewDidAppear
