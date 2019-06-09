@@ -479,6 +479,19 @@ open class SwiftyCamViewController: UIViewController {
 	}
 
 	// MARK: Public Functions
+    
+    /**
+  
+    Resume the Async sessionQueue
+  
+    Necessary when manually handling authorization
+  
+    */
+    
+    public func resumeSessionQueue()
+    {
+        self.sessionQueue.resume()
+    }
 
 	/**
 
